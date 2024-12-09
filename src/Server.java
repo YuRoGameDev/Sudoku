@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -24,7 +25,7 @@ public class Server {
         players = new ArrayList<>();
 
         try (
-                ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));) {
+                ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]),0, InetAddress.getByName("0.0.0.0"));) {
             while (true) {
                 try {
 
