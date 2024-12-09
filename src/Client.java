@@ -13,7 +13,7 @@ public class Client {
                 address = InetAddress.getByName(args[1]);
             }
            
-            System.out.println("Got Address" + address);
+            System.out.println("Current Address: " + address);
         } catch (Exception e) {
             System.out.println("Error: " + e);
         }
@@ -24,29 +24,24 @@ public class Client {
         PrintWriter pW = null;
 
         
-        try {
-            System.out.println("D");
+        try {         
             s = new Socket(address, Integer.parseInt(args[0]));
-            System.out.println("A");
             bR = new BufferedReader(new InputStreamReader(System.in));
-            System.out.println("B");
             iS = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            System.out.println("C");
             pW = new PrintWriter(s.getOutputStream(), true);
-            System.out.println("D");
         } catch (Exception e) {
             System.out.println("Error: " + e);
         }
         String response = null;
 
         try {
-            System.out.println("Welcome to the game!\n"
-                    + "Commands: update [row, col, num], show\n"
-                    + "Update Input Format: update Row (0-8), Column (0-8), Number (0-9)\n"
-                    + "Example: update 3 4 5\n"
-                    + "To start, enter show");
+            System.out.println("Multiplayer Sudoku!");
+            System.out.println("show - Shows the current board");
+            System.out.println("update [row (0-8, column (0-8), number (0-9))] - Update the board");
+            System.out.println("quit - Leave the game");
+
             inputLine = bR.readLine();
-            while (inputLine.compareTo("QUIT") != 0) {
+            while (inputLine.compareTo("quit") != 0) {
                 pW.println(inputLine);
                 response = iS.readLine();
                 if (response.contains("Game Finished")) {
@@ -73,7 +68,6 @@ public class Client {
                 s.close();
                 System.out.println("Connection Closed");
             } catch (Exception e) {
-                // TODO: handle exception
                 System.out.println("Error: " + e);
             }
 

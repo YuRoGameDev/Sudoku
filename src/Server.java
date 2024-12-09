@@ -2,13 +2,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
+//import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
 public class Server {
+
     static List<ServerThread> totalPlayers;
+    static int nextID = 1;
+    static String winnerID = "";
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -27,6 +30,7 @@ public class Server {
                 ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));) {
             while (true) {
                 try {
+                    //Called when new client connects
                     socket = serverSocket.accept();
                     servThread = new ServerThread(socket, sudokuGame);
                     totalPlayers.add(servThread);
@@ -37,7 +41,8 @@ public class Server {
                     e.printStackTrace();
                 }
                 if (sudokuGame.isBoardFull()) {
-                    announceWinner(totalPlayers);
+                    //When the board is full
+                    GameEnd();
                     break;
                 }
             }
@@ -49,24 +54,41 @@ public class Server {
 
     }
 
-    public static void announceWinner(List<ServerThread> players) {
-        ServerThread winner = Collections.max(players, Comparator.comparingInt(ServerThread::getPoints));
+    //When the board is full
+    public static void GameEnd() {
+    
+        int id = -1, points = -1;
+        //Display results
+        for (ServerThread player : totalPlayers) {
 
-        for (ServerThread player : players) {
-            player.pW.println("Game Finished! Winner: Player " + winner.getID());
+            int[] stats = player.returnPlayerStats();
+            if (id == -1) {
+                id = stats[0];
+                points = stats[1];
+            } else {
+                if (points < stats[1]) {
+                    id = stats[0];
+                    points = stats[1];
+                }
+            }
+
+            player.pW.println("Game Over! Player " + stats[0] + " has " + stats[1] + " points");
         }
+
+        //Display winner
+        for (ServerThread player : totalPlayers) {
+            player.pW.println("Winner: Player " + id +" with " + points + " points");
+        }
+        
     }
 
+    //Closes the server if all players leave
     public static void CloseGame() {
         if(totalPlayers.size() == 0){
             System.out.println("All players have left.");
             System.exit(1);
         } 
-        
     }
-
-    static int nextID = 1;
-    static String winnerID = "";
 
     static class ServerThread extends Thread {
         String inputLine;
@@ -74,6 +96,7 @@ public class Server {
         PrintWriter pW;
         Socket s;
         Sudoku sudoku;
+
         final int id;
         int points;
 
@@ -100,9 +123,8 @@ public class Server {
 
             try {
                 inputLine = bR.readLine();
-
-                while (inputLine.compareTo("EXIT") != 0 && !sudoku.isBoardFull()) {
-                    System.out.println(sudoku.isBoardFull());
+                while (!sudoku.isBoardFull()) {
+                    System.out.println("Sudoku board full? " + sudoku.isBoardFull());
                     String[] inputs = inputLine.split(" ");
                     System.out.println(inputs[0]);
 
@@ -123,7 +145,7 @@ public class Server {
                         if (!sudoku.enterNumber(nums[0], nums[1], nums[2])) {
                             System.out.println("Numbers");
                             System.out.println(nums[0] + " " + nums[1] + " " + nums[2]);
-                            pW.println("Can't put that number there bud.\n" + sudoku.getSudokuString());
+                            pW.println("Invalid Placement!\n" + sudoku.getSudokuString());
 
                         } else {
                             points++;
@@ -152,13 +174,14 @@ public class Server {
                 System.out.println("Error: " + e);
             } finally {
 
+                //Keeps track when a player quits
                 synchronized (totalPlayers) {
                     totalPlayers.remove(this);
+                    System.out.println(totalPlayers.size() + " Player(s) connected");
                     CloseGame();
                 }
-                System.out.println(totalPlayers.size());
-                announceWinner(totalPlayers);
-                // players.remove(id);
+
+                GameEnd();
 
                 try {
                     System.out.println("Connection Closing..");
@@ -182,13 +205,12 @@ public class Server {
             }
         }
 
-        public int getID() {
-            return id;
+        public int[] returnPlayerStats()
+        {
+            int[] stats = {id,points};
+            return stats;
         }
 
-        public int getPoints() {
-            return points;
-        }
 
     }
 }
