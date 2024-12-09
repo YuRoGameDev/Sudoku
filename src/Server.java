@@ -8,44 +8,42 @@ import java.net.Socket;
 import java.util.*;
 
 public class Server {
-    static List<ServerThread> players;
+    static List<ServerThread> totalPlayers;
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: java EchoServer 8000");
+            System.err.println("Missing Port Number");
             System.exit(1);
         }
-        Socket s;
-        ServerThread sThread = null;
+        Socket socket;
+        ServerThread servThread = null;
 
-        int portNumber = 8000;
         Sudoku sudokuGame = new Sudoku();
         sudokuGame.fillValues();
 
-        players = new ArrayList<>();
+        totalPlayers = new ArrayList<>();
 
         try (
-                ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]),0, InetAddress.getByName("0.0.0.0"));) {
+                ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));) {
             while (true) {
                 try {
-
-                    s = serverSocket.accept();
-                    sThread = new ServerThread(s, sudokuGame);
-                    players.add(sThread);
-                    System.out.println(players.size() + " Players connected");
-                    sThread.start();
+                    socket = serverSocket.accept();
+                    servThread = new ServerThread(socket, sudokuGame);
+                    totalPlayers.add(servThread);
+                    servThread.start();
+                    System.out.println(totalPlayers.size() + " Player(s) connected");
                 } catch (Exception e) {
+                    System.out.println("Connection Error: ");
                     e.printStackTrace();
-                    System.out.println("Connection Error");
                 }
                 if (sudokuGame.isBoardFull()) {
-                    announceWinner(players);
+                    announceWinner(totalPlayers);
                     break;
                 }
             }
         } catch (IOException e) {
             System.out.println("Exception caught when trying to listen on port "
-                    + portNumber + " or listening for a connection");
+                    + args[0] + " or listening for a connection");
             System.out.println(e.getMessage());
         }
 
@@ -57,6 +55,14 @@ public class Server {
         for (ServerThread player : players) {
             player.pW.println("Game Finished! Winner: Player " + winner.getID());
         }
+    }
+
+    public static void CloseGame() {
+        if(totalPlayers.size() == 0){
+            System.out.println("All players have left.");
+            System.exit(1);
+        } 
+        
     }
 
     static int nextID = 1;
@@ -89,6 +95,7 @@ public class Server {
                 pW = new PrintWriter(s.getOutputStream(), true);
             } catch (Exception e) {
                 System.out.println("Error: " + e);
+                return;
             }
 
             try {
@@ -145,8 +152,13 @@ public class Server {
                 System.out.println("Error: " + e);
             } finally {
 
-                announceWinner(players);
-                players.remove(id);
+                synchronized (totalPlayers) {
+                    totalPlayers.remove(this);
+                    CloseGame();
+                }
+                System.out.println(totalPlayers.size());
+                announceWinner(totalPlayers);
+                // players.remove(id);
 
                 try {
                     System.out.println("Connection Closing..");

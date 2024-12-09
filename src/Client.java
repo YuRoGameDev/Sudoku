@@ -7,7 +7,12 @@ public class Client {
         InetAddress address = null;
 
         try {
-            address = InetAddress.getByName(args[0]);
+            if(args.length < 2){
+                address = InetAddress.getLocalHost();
+            }else{
+                address = InetAddress.getByName(args[1]);
+            }
+           
             System.out.println("Got Address" + address);
         } catch (Exception e) {
             System.out.println("Error: " + e);
@@ -21,7 +26,7 @@ public class Client {
         
         try {
             System.out.println("D");
-            s = new Socket(address, Integer.parseInt(args[1]));
+            s = new Socket(address, Integer.parseInt(args[0]));
             System.out.println("A");
             bR = new BufferedReader(new InputStreamReader(System.in));
             System.out.println("B");

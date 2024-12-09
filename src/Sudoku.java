@@ -150,8 +150,6 @@ public class Sudoku {
 		}
 	}
 
-	// Only use these 4 methods , Kevin
-
 	// Return Sudoku board as a string
 	public String getSudokuString() {
 		StringBuffer sb = new StringBuffer();
@@ -187,13 +185,10 @@ public class Sudoku {
 		if (isBoardFull()) {
 			return false;
 		}
-		if ((i > 9 || i < 0) && (j > 9 || j < 0) && (num > 9 || num < 0)) {
+		if ((i < 0 || i > 9) && (j < 0 || j > 9) && (num < 0 || num > 9)) {
 			return false;
 		}
-		if (!isLocationUpdatable(i, j)) {
-			return false;
-		}
-		if (!CheckIfSafe(i, j, num)) {
+		if (!isLocationUpdatable(i, j) || !CheckIfSafe(i, j, num)) {
 			return false;
 		}
 
